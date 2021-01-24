@@ -1,0 +1,130 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nonogram Solver Debug View</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            background-color: skyblue;
+        }
+
+        .ratio-box {
+            width: 40%;
+        }
+
+        .grid-container {
+            position: relative;
+            background-color: black;
+            padding-bottom: 100%;
+        }
+
+        .grid {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: space-evenly;
+            background-color: red;
+        }
+
+        .row {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            /* justify-content: space-evenly; */
+            align-items: stretch;
+            align-content: stretch;
+            border-bottom: 2px solid black;
+            box-sizing: content-box;
+        }
+
+        .block {
+            width: 100%;
+            background-color: white;
+            box-sizing: content-box;
+            border-right: 2px solid black;
+        }
+
+        .block.filled {
+            background-color: #777;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ratio-box" id="ratio-box">
+        <div class="grid-container" id= "grid-container">
+            <div class="grid" id="grid">
+                <!-- <div class="row">
+                    <div class="block"></div>
+                    <div class="block"></div>
+                    <div class="block"></div>
+                </div>
+                <div class="row">
+                    <div class="block"></div>
+                    <div class="block"></div>
+                    <div class="block"></div>
+                </div>
+                <div class="row">
+                    <div class="block"></div>
+                    <div class="block"></div>
+                    <div class="block"></div>
+                </div> -->
+            </div>
+        </div>
+    </div>
+    <script>
+        const grid = document.getElementById("grid");
+        const grid_container=document.getElementById("grid-container");
+        const ratio_box=document.getElementById("ratio-box");
+        function init_board(width, height) {
+            let ratio_percentage=height/width*100;
+            grid_container.style.paddingBottom=ratio_percentage+"%";
+            let ratio_box_width=Math.min(width,height)/height*100/2.1;
+            ratio_box.style.width=ratio_box_width+"%";
+            for (let i = 0; i < height; i++) {
+                const row=document.createElement("div");
+                row.classList.add("row");
+                for (let j = 0; j < width; j++) {
+                    const block=document.createElement("div");
+                    block.classList.add("block");
+                    row.appendChild(block);
+                }
+                grid.appendChild(row);
+            }
+        }
+        const sock=new WebSocket("ws://127.0.0.1:4741/");
+        let received_initial_board_data=false;
+        sock.onmessage=(e)=>{
+            let data=e.data;
+            if (received_initial_board_data){
+                let command=JSON.parse(data);
+                const block=grid.children[command.row].children[command.column];
+                if(command.draw){
+                    block.classList.add('filled');
+                }else{
+                    block.classList.remove('filled');
+                }
+            }else{
+                let dimensions=JSON.parse(data);
+                init_board(dimensions.width,dimensions.height);
+                received_initial_board_data=true;
+            }
+        }
+    </script>
+</body>
+
+</html>
